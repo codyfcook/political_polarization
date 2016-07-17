@@ -4,6 +4,7 @@ import re
 import sys
 from datetime import datetime
 import cPickle as pickle
+from custom_utilities import make_soup
 sys.setrecursionlimit(10000)
 
 '''
@@ -19,16 +20,6 @@ DEBATE_LINK_IDS = [116995, 112719, 112718, 111520, 111471, 111409, 111178, 11091
                     110903, 115148, 111711, 111634, 111500, 111472, 111412, 111395,
                     111177, 110908, 110906, 110756, 110489]
 
-def make_soup(link):
-    '''
-    Simple function to make soup from a page for a given link
-    '''
-    try:
-        response = requests.get(link)
-        soup = BeautifulSoup(response.content, "html.parser")
-        return soup
-    except:
-        print "ERROR IN MAKING SOUP: " + str(link)
 
 def scrape_debate_text(soup):
     '''
