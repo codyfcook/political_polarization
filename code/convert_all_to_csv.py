@@ -1,18 +1,37 @@
 import cPickle as pickle
 import csv
+from datetime import datetime
 
-## Other Election Documents ##
+## ALL ELECTION DOCUMENTS ##
+# ------------------------ #
+# Write debates, speeches, press releases, etc. to the same file
+
+# DEBATES #
+d = pickle.load(open("../raw_data/debate_text.p", "rb"))
+f = csv.writer(open("../final_data/all_election_documents.csv", "wb"))
+f.writerow(["date", "speaker", "text", "type"])
+for date in d.keys():
+    for speaker in d[date].keys():
+        f.writerow([
+            date,
+            unicode(speaker.lower().replace(",", "")).encode("utf-8"),
+            d[date][speaker].replace(",", ""),
+            "debate"
+            ])
+
+# SPEECHES, ETC. #
 d = pickle.load(open("../raw_data/other_election_documents_text.p", "rb"))
-f = csv.writer(open("../final_data/other_election_documents.csv", "wb+"))
-f.writerow(["speaker", "type", "date", "text"])
-
 for speaker in d.keys():
     for type1 in d[speaker].keys():
         for date in d[speaker][type1].keys():
-            f.writerow([unicode(speaker.replace(",", "")).encode("utf-8"),
-            unicode(type1.replace(",", "")).encode("utf-8"),
-            unicode(date.replace(",", "")).encode("utf-8"),
-            unicode(d[speaker][type1][date].replace(",", "")).encode("utf-8")])
+            date_f = datetime.strptime(date, "%B %d, %Y")
+            f.writerow([
+            date_f,
+            unicode(speaker.replace(",", "")).encode("utf-8"),
+            unicode(d[speaker][type1][date].replace(",", "")).encode("utf-8"),
+            unicode(type1.replace(",", "")).encode("utf-8")
+            ])
+
 
 
 ## ThomasLOC -- HOUSE ##
@@ -58,17 +77,3 @@ for date in d.keys():
                         unicode(party.replace(",", "")).encode("utf-8"),
                         unicode(dwnom.replace(",", "")).encode("utf-8")
                         ])
-
-
-
-## Debates ##
-d = pickle.load(open("../raw_data/debate_text.p", "rb"))
-f = csv.writer(open("../final_data/debates.csv", "wb"))
-f.writerow(["date", "speaker", "text"])
-
-for date in d.keys():
-    for speaker in d[date].keys():
-        f.writerow([unicode(date).encode("utf-8"),
-            unicode(speaker.lower().replace(",", "")).encode("utf-8"),
-            d[date][speaker].replace(",", "")
-            ])
