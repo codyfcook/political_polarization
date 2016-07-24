@@ -49,11 +49,9 @@ house_dwnom.to_csv("../working_data/house_dwnom_clean.csv", header=True)
 # -------- #
 #  SENATE  #
 # -------- #
-
 '''
 Scrapes and cleans ThomasLOC senate and then maps to the dwnominate scores
 '''
-
 # Find links
 links = thomasLOC_utilities.scrape_all_links(START_YEAR, START_MONTH, END_YEAR, END_MONTH, is_senate=True)
 pickle.dump(links, open("../working_data/senate_links_dict.p", "wb"))
@@ -71,8 +69,33 @@ all_names = thomasLOC_utilities.find_all_names_in_text_dict(cleaned_text)
 speakers_dict = thomasLOC_utilities.split_all_text_dict(cleaned_text, all_names)
 # Add party affiliations and dwnom scores to speakers dict
 party_map = thomasLOC_utilities.create_name_to_party_map(all_names, is_senate=True)
-party_map = create_name_to_party_map(all_names, is_senate=True)
 speakers_dict = thomasLOC_utilities.add_dwnom_and_party(speakers_dict, party_map)
-speakers_dict = add_dwnom_and_party(speakers_dict, party_map)
 # Save!
 pickle.dump(speakers_dict, open("../working_data/senate_speakers_dict.p", "wb"))
+
+# -------- #
+#  HOUSE   #
+# -------- #
+'''
+Scrapes and cleans ThomasLOC senate and then maps to the dwnominate scores
+'''
+# Find links
+links = thomasLOC_utilities.scrape_all_links(START_YEAR, START_MONTH, END_YEAR, END_MONTH, is_senate=False)
+pickle.dump(links, open("../working_data/house_links_dict.p", "wb"))
+# Find all text on those links
+links = pickle.load(open("../working_data/house_links_dict.p", "rb"))
+text_dict = thomasLOC_utilities.create_text_dict(links)
+pickle.dump(text_dict, open("../working_data/house_text_dict.p", "wb"))
+# Clean text dict
+text_dict = pickle.load(open("../working_data/house_text_dict.p", "rb"))
+cleaned_text = thomasLOC_utilities.clean_text(text_dict)
+pickle.dump(cleaned_text, open("../working_data/house_cleaned_text_dict.p", "wb"))
+# Create speakers dictionary -- splitting by speaker within each day-topic
+cleaned_text = pickle.load(open("../working_data/house_cleaned_text_dict.p", "rb"))
+all_names = thomasLOC_utilities.find_all_names_in_text_dict(cleaned_text)
+speakers_dict = thomasLOC_utilities.split_all_text_dict(cleaned_text, all_names)
+# Add party affiliations and dwnom scores to speakers dict
+party_map = thomasLOC_utilities.create_name_to_party_map(all_names, is_senate=False)
+speakers_dict = thomasLOC_utilities.add_dwnom_and_party(speakers_dict, party_map)
+# Save!
+pickle.dump(speakers_dict, open("../working_data/house_speakers_dict.p", "wb"))

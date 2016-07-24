@@ -49,6 +49,8 @@ def split_text_by_speaker(debate_text):
     spoke at least once and maps to a list what they said each time they spoke
     '''
     rv = {}
+    # There are some nested paragraphs that get missed by beautifulsoup. This fixes that
+    debate_text = debate_text.replace('<p>', '</p><p>')
     # Turn back into soup to make easier to navigate. Find all paragraphs.
     debate_soup = BeautifulSoup(debate_text)
     paras = debate_soup.findAll("p")
@@ -95,7 +97,8 @@ if __name__=="__main__":
         # Constructe the link from the base and this debates ID
         link = BASE_LINK + str(debate_id)
         # Make soup and then get the text for that page split by speaker
-        soup = make_soup(link)
+        response = requests.get(link)
+        soup = BeautifulSoup(response.content, 'html.parser')
         text = scrape_debate_text(soup)
         split_text = split_text_by_speaker(text)
         # Pull the date
