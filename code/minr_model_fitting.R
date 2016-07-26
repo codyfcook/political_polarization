@@ -85,5 +85,25 @@ corr(cong_preds$fit[,1], covars[,2])
 plot(cong_preds$fit[,1]~covars[,2], ylim=c(-1,1), xlim=c(-1,1))
 
 
+# ---------------
+# CANDIDATES 
+# --------------- 
+library(plyr)
+cand_counts_raw <- read.csv("../final_data/pres_cand_counts.csv", header=TRUE)
+cand_counts = data.matrix(cand_counts_raw)
+cand_counts <- as(cand_counts, "dgCMatrix")
 
+## Forward regression: DWNOMINATE
+x <- Z
+summary(fwd <- lm(covars$dwnom ~ x))
+predinve <- srproj(B,cand_counts)
+x <- predinve
+fwd_preds <- predict(fwd, data.frame(x), se.fit=TRUE, level=.95, interval="confidence", type="response")
+
+cand_labels <- read.csv("../final_data/cand_date_labels.csv", header=FALSE)
+cand_results <- cbind(cand_labels,fwd_preds)
+#cand_results <- cbind(cand_labels,predinve)
+cand_results <- rename(cand_results, c("V1"="candidate", "V2"="date"))
+
+write.csv(cand_results, file="../final_data/candidate_fitted_values.csv")
 
