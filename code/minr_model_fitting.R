@@ -4,7 +4,6 @@ library(textir)
 setwd("~/GitHub/political_polarization/code")
 
 
-
 # --------- ---------------------------
 # Fit model with congressional counts 
 # -------------------------------------
@@ -12,6 +11,10 @@ setwd("~/GitHub/political_polarization/code")
 # Read in data
 cong2016_counts <- read.csv("../final_data/cong2016_counts.csv", header=TRUE)
 cong2016_covars <- read.csv("../final_data/cong2016_covars.csv", header=TRUE)
+
+# Remove rows 1, 62, and 176, which are throwing off projections. Weirdly major outliers
+cong2016_counts <- cong2016_counts[-c(1,62, 179),]
+cong2016_covars <- cong2016_covars[-c(1,62, 179),]
 
 # Standardize. Need congcounts as a dgCMatrix for the model (sparce matrix)
 covars <- data.frame(gop=cong2016_covars$party, dwnom=cong2016_covars$dwnom)
@@ -24,6 +27,62 @@ cl <- makeCluster(detectCores()) #type="FORK" if on a Mac
 # Fit the model using covars and congcounts
 fitCS <- mnlm(cl, covars, congcounts, bins=5,gamma=1)
 stopCluster(cl)
+
+
+# Plot fits
+par(mfrow=c(1,2))
+for(j in c("lose.job","issu.urg")){
+  plot(fitCS[[j]], col=c("red","green"))
+  mtext(j,line=2) }
+legend("topright",bty="n",fill=c("red","green"),legend=names(covars))
+
+# Save coefficients to a csv as loadings in case we later want to check most loaded phrases
+B <- coef(fitCS)
+library(reshape)
+B2 <- data.frame(t(as(B, 'matrix')))
+write.csv(B2, "loadings.csv")
+mean(B[2,]==0) # sparsity in loadings
+## some big loadings in IR
+B[1,order(B[2,])[1:30]]
+B[1,order(-B[2,])[1:30]]
+
+
+## plot the IR sufficient reduction space
+Z <- srproj(fitCS, congcounts)
+par(mfrow=c(1,1))
+covars$color[covars$gop==1]='red'
+covars$color[covars$gop==0]='blue'
+png("../graphs/srproj.png", width=6, height=4, units="in", res=700)
+plot(Z, pch=21, bg=covars$color, col=covars$color,main="SR projections", ylab='dw-nominate')
+dev.off()
+
+## Forward regression DWNOMINATE with plot for fitted vals
+x <- Z
+summary(fwd <- lm(covars$dwnom ~ x))
+par(mfrow=c(1,1))
+png("../graphs/dwnom_fittedvals.png", width=5, height=5, units="in", res=300)
+plot(fwd$fitted ~ covars$dwnom, col="lightslategrey", ylab='fitted value', xlab='dw-nominate', xlim=c(-1,1), ylim=c(-1,1))
+title(main="DW-NOMINATE Fitted Values")
+dev.off()
+
+## Forward regression GOP with plot for fitted vals
+x <- Z
+summary(fwd <- lm(covars$gop ~ x))
+par(mfrow=c(1,1))
+png("../graphs/gop_fittedvals.png", width=5, height=5, units="in", res=300)
+boxplot(fwd$fitted ~ covars$gop, col="lightslategrey", ylab='fitted value', xlab='party affiliation')
+title(main="Party Affiliation Fitted Values")
+dev.off()
+
+# Compare to true values
+x <- Z
+summary(fwd <- lm(covars$dwnom ~ x))
+cong_preds <- srproj(B,congcounts)
+x <- cong_preds
+cong_preds <- predict(fwd, data.frame(x), se.fit=TRUE, level=.95, interval="confidence", type="response")
+
+corr(cong_preds$fit[,1], covars[,2])
+plot(cong_preds$fit[,1]~covars[,2], ylim=c(-1,1), xlim=c(-1,1))
 
 
 
