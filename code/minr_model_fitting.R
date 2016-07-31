@@ -107,3 +107,21 @@ cand_results <- rename(cand_results, c("V1"="candidate", "V2"="date"))
 
 write.csv(cand_results, file="../final_data/candidate_fitted_values.csv")
 
+
+## ALL SPEECH ##
+library(plyr)
+cand_counts_raw <- read.csv("../final_data/candidates_all_speech.csv", header=TRUE)
+cand_counts = data.matrix(cand_counts_raw)
+cand_counts <- as(cand_counts, "dgCMatrix")
+x <- Z
+summary(fwd <- lm(covars$dwnom ~ x))
+predinve <- srproj(B,cand_counts)
+x <- predinve
+fwd_preds <- predict(fwd, data.frame(x), se.fit=TRUE, level=.95, interval="confidence", type="response")
+
+cand_labels <- read.csv("../final_data/candidates_all_speech_labels.csv", header=FALSE)
+cand_results <- cbind(cand_labels,fwd_preds)
+cand_results <- rename(cand_results, c("V1"="candidate"))
+
+write.csv(cand_results, file="../final_data/candidates_all_speech_fitted_values.csv")
+
